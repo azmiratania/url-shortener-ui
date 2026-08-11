@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Link · URL Shortener</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #06070d;
+        --surface: rgba(255, 255, 255, 0.04);
+        --surface-strong: rgba(255, 255, 255, 0.07);
+        --border: rgba(255, 255, 255, 0.1);
+        --border-bright: rgba(255, 255, 255, 0.18);
+        --text: #f4f6fb;
+        --muted: #94a3b8;
+        --accent: #5eead4;
+        --accent-2: #818cf8;
+        --accent-3: #f472b6;
+        --error: #fb7185;
+        --success: #4ade80;
+        --radius: 20px;
+        --font: "Outfit", system-ui, sans-serif;
+        --display: "Instrument Serif", Georgia, serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+        overflow-x: hidden;
+      }
+
+      /* Animated background */
+      .bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .bg::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(ellipse 100% 80% at 50% -30%, rgba(94, 234, 212, 0.14), transparent 55%),
+          radial-gradient(ellipse 70% 50% at 100% 50%, rgba(129, 140, 248, 0.12), transparent 50%),
+          radial-gradient(ellipse 60% 40% at 0% 80%, rgba(244, 114, 182, 0.1), transparent 50%);
+      }
+
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(80px);
+        opacity: 0.55;
+        animation: float 18s ease-in-out infinite;
+      }
+
+      .orb-1 {
+        width: 420px;
+        height: 420px;
+        background: #5eead4;
+        top: -8%;
+        left: -5%;
+        animation-delay: 0s;
+      }
+
+      .orb-2 {
+        width: 360px;
+        height: 360px;
+        background: #818cf8;
+        top: 40%;
+        right: -10%;
+        animation-delay: -6s;
+      }
+
+      .orb-3 {
+        width: 280px;
+        height: 280px;
+        background: #f472b6;
+        bottom: -5%;
+        left: 25%;
+        animation-delay: -12s;
+      }
+
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 64px 64px;
+        mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black, transparent);
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(30px, -25px) scale(1.05);
+        }
+        66% {
+          transform: translate(-20px, 15px) scale(0.95);
+        }
+      }
+
+      @keyframes fade-up {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes shimmer {
+        0% {
+          background-position: 200% center;
+        }
+        100% {
+          background-position: -200% center;
+        }
+      }
+
+      @keyframes pulse-glow {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.25);
+        }
+        50% {
+          box-shadow: 0 0 32px 4px rgba(94, 234, 212, 0.15);
+        }
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes pop-in {
+        0% {
+          opacity: 0;
+          transform: scale(0.92) translateY(12px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes border-spin {
+        to {
+          --angle: 360deg;
+        }
+      }
+
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 3.5rem 1.25rem 4rem;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 2.75rem;
+        animation: fade-up 0.8s ease both;
+      }
+
+      .logo-wrap {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1.25rem;
+      }
+
+      .logo {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4rem;
+        height: 4rem;
+        padding: 0;
+        border: none;
+        border-radius: 18px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: var(--bg);
+        font-size: 1.5rem;
+        font-weight: 700;
+        box-shadow: 0 12px 40px rgba(94, 234, 212, 0.25);
+        animation: pulse-glow 3s ease-in-out infinite;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .logo:hover {
+        transform: scale(1.05);
+      }
+
+      .logo:active {
+        transform: scale(0.98);
+      }
+
+      .logo:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 6px;
+      }
+
+      .logo-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 22px;
+        border: 1px solid rgba(94, 234, 212, 0.25);
+        animation: spin 12s linear infinite;
+      }
+
+      h1 {
+        margin: 0 0 0.625rem;
+        font-family: var(--display);
+        font-size: clamp(2.25rem, 6vw, 3.25rem);
+        font-weight: 400;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      h1 em {
+        font-style: italic;
+        background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .subtitle {
+        margin: 0 auto;
+        max-width: 28rem;
+        color: var(--muted);
+        font-size: 1.0625rem;
+        font-weight: 300;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1.75rem;
+      }
+
+      .stat {
+        text-align: center;
+      }
+
+      .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 600;
+        background: linear-gradient(180deg, var(--text), var(--muted));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      /* Glass card with animated border */
+      .card-wrap {
+        animation: fade-up 0.8s ease 0.15s both;
+      }
+
+      .card {
+        position: relative;
+        border-radius: var(--radius);
+        padding: 2px;
+        background: conic-gradient(
+          from var(--angle, 0deg),
+          transparent 0%,
+          rgba(94, 234, 212, 0.5) 10%,
+          transparent 20%,
+          rgba(129, 140, 248, 0.4) 40%,
+          transparent 50%,
+          rgba(244, 114, 182, 0.35) 70%,
+          transparent 80%
+        );
+        animation: border-spin 8s linear infinite;
+      }
+
+      @property --angle {
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
+      }
+
+      .card-inner {
+        background: rgba(12, 14, 24, 0.75);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-radius: calc(var(--radius) - 2px);
+        padding: 1.75rem;
+      }
+
+      .input-group {
+        position: relative;
+      }
+
+      .input-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+        pointer-events: none;
+        transition: color 0.2s;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.875rem;
+      }
+
+      @media (min-width: 540px) {
+        form {
+          flex-direction: row;
+          align-items: stretch;
+        }
+      }
+
+      label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+
+      input[type="url"] {
+        flex: 1;
+        min-width: 0;
+        padding: 1rem 1rem 1rem 2.75rem;
+        font-family: var(--font);
+        font-size: 1rem;
+        color: var(--text);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      }
+
+      input[type="url"]::placeholder {
+        color: var(--muted);
+        font-weight: 300;
+      }
+
+      input[type="url"]:focus {
+        border-color: rgba(94, 234, 212, 0.45);
+        background: var(--surface-strong);
+        box-shadow: 0 0 0 4px rgba(94, 234, 212, 0.1), 0 8px 32px rgba(0, 0, 0, 0.2);
+      }
+
+      input[type="url"]:focus + .input-icon,
+      .input-group:focus-within .input-icon {
+        color: var(--accent);
+      }
+
+      .submit-btn {
+        position: relative;
+        overflow: hidden;
+        padding: 1rem 1.75rem;
+        font-family: var(--font);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--bg);
+        background: linear-gradient(135deg, var(--accent) 0%, #2dd4bf 50%, var(--accent-2) 100%);
+        background-size: 200% auto;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: transform 0.15s, box-shadow 0.2s;
+        box-shadow: 0 8px 24px rgba(94, 234, 212, 0.25);
+      }
+
+      .submit-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 32px rgba(94, 234, 212, 0.35);
+        animation: shimmer 2s linear infinite;
+      }
+
+      .submit-btn:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .submit-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .submit-btn .spinner {
+        display: none;
+        width: 1.125rem;
+        height: 1.125rem;
+        border: 2px solid rgba(6, 7, 13, 0.2);
+        border-top-color: var(--bg);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+      }
+
+      .submit-btn.loading .spinner {
+        display: inline-block;
+      }
+
+      .submit-btn.loading .btn-text {
+        opacity: 0.85;
+      }
+
+      .message {
+        margin-top: 1.125rem;
+        padding: 0.875rem 1.125rem;
+        border-radius: 12px;
+        font-size: 0.9375rem;
+        animation: pop-in 0.35s ease both;
+      }
+
+      .message.error {
+        background: rgba(251, 113, 133, 0.1);
+        border: 1px solid rgba(251, 113, 133, 0.3);
+        color: var(--error);
+      }
+
+      .message.success {
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.25);
+        color: var(--success);
+      }
+
+      .result {
+        margin-top: 1.75rem;
+        padding-top: 1.75rem;
+        border-top: 1px solid var(--border);
+        display: none;
+      }
+
+      .result.visible {
+        display: block;
+        animation: pop-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.875rem;
+      }
+
+      .result-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.25rem 0.625rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent);
+        background: rgba(94, 234, 212, 0.1);
+        border: 1px solid rgba(94, 234, 212, 0.2);
+        border-radius: 999px;
+      }
+
+      .result-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--success);
+        box-shadow: 0 0 8px var(--success);
+      }
+
+      .result-row {
+        display: flex;
+        gap: 0.625rem;
+        align-items: stretch;
+      }
+
+      .result-link-wrap {
+        flex: 1;
+        min-width: 0;
+        position: relative;
+      }
+
+      .result-link {
+        display: block;
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-family: "SF Mono", "Fira Code", ui-monospace, monospace;
+        font-size: 0.875rem;
+        color: var(--accent);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        text-decoration: none;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: border-color 0.2s, background 0.2s;
+      }
+
+      .result-link:hover {
+        border-color: rgba(94, 234, 212, 0.35);
+        background: var(--surface-strong);
+      }
+
+      .copy-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.875rem 1.125rem;
+        font-family: var(--font);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--text);
+        background: var(--surface-strong);
+        border: 1px solid var(--border-bright);
+        border-radius: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+      }
+
+      .copy-btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(94, 234, 212, 0.4);
+      }
+
+      .copy-btn.copied {
+        color: var(--success);
+        border-color: rgba(74, 222, 128, 0.4);
+        background: rgba(74, 222, 128, 0.08);
+      }
+
+      .result-meta {
+        margin: 0.875rem 0 0;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        word-break: break-all;
+        line-height: 1.6;
+      }
+
+      .result-meta strong {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .history {
+        margin-top: 2.5rem;
+        animation: fade-up 0.8s ease 0.3s both;
+      }
+
+      .history-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+
+      .history h2 {
+        margin: 0;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+      }
+
+      .clear-btn {
+        padding: 0.375rem 0.75rem;
+        font-family: var(--font);
+        font-size: 0.75rem;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s;
+      }
+
+      .clear-btn:hover {
+        color: var(--error);
+        border-color: rgba(251, 113, 133, 0.35);
+      }
+
+      .history-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+      }
+
+      .history-item {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding: 0.875rem 1.125rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        font-size: 0.875rem;
+        transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        animation: pop-in 0.4s ease both;
+      }
+
+      .history-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--border-bright);
+        transform: translateX(4px);
+      }
+
+      .history-slug {
+        flex-shrink: 0;
+        padding: 0.25rem 0.625rem;
+        font-family: ui-monospace, monospace;
+        font-size: 0.8125rem;
+        color: var(--accent);
+        background: rgba(94, 234, 212, 0.08);
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background 0.15s;
+      }
+
+      .history-slug:hover {
+        background: rgba(94, 234, 212, 0.15);
+      }
+
+      .history-dest {
+        flex: 1;
+        min-width: 0;
+        color: var(--muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .history-copy {
+        flex-shrink: 0;
+        padding: 0.375rem;
+        color: var(--muted);
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: color 0.15s, background 0.15s;
+      }
+
+      .history-copy:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      footer {
+        margin-top: 3rem;
+        text-align: center;
+        font-size: 0.8125rem;
+        color: var(--muted);
+        font-weight: 300;
+        animation: fade-up 0.8s ease 0.45s both;
+      }
+
+      #confetti-canvas {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 100;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        border: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="grid-overlay"></div>
+    </div>
+
+    <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+    <main>
+      <header>
+        <div class="logo-wrap">
+          <div class="logo-ring"></div>
+          <button type="button" class="logo" id="logo-home" aria-label="Reload page">⛓</button>
+        </div>
+        <h1>Shorten your <em>links</em></h1>
+        <p class="subtitle">
+          Transform unwieldy URLs into elegant, shareable slugs — fast, free, and beautifully simple.
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="stat-count">0</span>
+            <span class="stat-label">Links created</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">302</span>
+            <span class="stat-label">Instant redirect</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="card-wrap">
+        <div class="card">
+          <div class="card-inner">
+            <section aria-labelledby="shorten-heading">
+              <h2 id="shorten-heading" class="sr-only">Shorten a URL</h2>
+              <form id="shorten-form">
+                <div class="input-group" style="flex: 1; min-width: 0">
+                  <label for="destination">Destination URL</label>
+                  <input
+                    id="destination"
+                    name="destination"
+                    type="url"
+                    placeholder="https://example.com/very/long/path?with=params"
+                    autocomplete="url"
+                    required
+                  />
+                  <svg
+                    class="input-icon"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </div>
+                <button type="submit" class="submit-btn" id="submit-btn">
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span class="btn-text">Shorten URL</span>
+                </button>
+              </form>
+
+              <div id="feedback" class="message" role="alert" hidden></div>
+
+              <div id="result" class="result" aria-live="polite">
+                <div class="result-header">
+                  <span class="result-badge">
+                    <span class="result-badge-dot"></span>
+                    Ready to share
+                  </span>
+                </div>
+                <div class="result-row">
+                  <div class="result-link-wrap">
+                    <a id="short-link" class="result-link" href="#" target="_blank" rel="noopener noreferrer"></a>
+                  </div>
+                  <button type="button" class="copy-btn" id="copy-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    Copy
+                  </button>
+                </div>
+                <p class="result-meta" id="destination-display"></p>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <section class="history" id="history-section" hidden>
+        <div class="history-header">
+          <h2>Recent links</h2>
+          <button type="button" class="clear-btn" id="clear-history">Clear all</button>
+        </div>
+        <ul class="history-list" id="history-list"></ul>
+      </section>
+
+      <footer>Built for speed · Powered by your API</footer>
+    </main>
+
+    <script>
+      const form = document.getElementById("shorten-form");
+      const input = document.getElementById("destination");
+      const submitBtn = document.getElementById("submit-btn");
+      const feedback = document.getElementById("feedback");
+      const result = document.getElementById("result");
+      const shortLink = document.getElementById("short-link");
+      const copyBtn = document.getElementById("copy-btn");
+      const destinationDisplay = document.getElementById("destination-display");
+      const historySection = document.getElementById("history-section");
+      const historyList = document.getElementById("history-list");
+      const clearHistoryBtn = document.getElementById("clear-history");
+      const statCount = document.getElementById("stat-count");
+      const confettiCanvas = document.getElementById("confetti-canvas");
+      const logoHome = document.getElementById("logo-home");
+
+      const HISTORY_KEY = "url-shortener-history";
+      const MAX_HISTORY = 10;
+
+      function showFeedback(text, type) {
+        feedback.textContent = text;
+        feedback.className = "message " + type;
+        feedback.hidden = false;
+      }
+
+      function hideFeedback() {
+        feedback.hidden = true;
+      }
+
+      function setLoading(loading) {
+        submitBtn.disabled = loading;
+        submitBtn.classList.toggle("loading", loading);
+        submitBtn.querySelector(".btn-text").textContent = loading ? "Shortening…" : "Shorten URL";
+      }
+
+      function loadHistory() {
+        try {
+          return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+        } catch {
+          return [];
+        }
+      }
+
+      function updateStats() {
+        statCount.textContent = loadHistory().length;
+      }
+
+      function saveHistory(entry) {
+        const history = loadHistory().filter((item) => item.slug !== entry.slug);
+        history.unshift(entry);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+        renderHistory();
+        updateStats();
+      }
+
+      function renderHistory() {
+        const history = loadHistory();
+        historyList.innerHTML = "";
+
+        if (history.length === 0) {
+          historySection.hidden = true;
+          return;
+        }
+
+        historySection.hidden = false;
+
+        history.forEach((item, index) => {
+          const li = document.createElement("li");
+          li.className = "history-item";
+          li.style.animationDelay = index * 0.05 + "s";
+
+          const link = document.createElement("a");
+          link.className = "history-slug";
+          link.href = item.short_url;
+          link.textContent = item.slug;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+
+          const dest = document.createElement("span");
+          dest.className = "history-dest";
+          dest.title = item.destination_url;
+          dest.textContent = item.destination_url;
+
+          const copy = document.createElement("button");
+          copy.className = "history-copy";
+          copy.type = "button";
+          copy.title = "Copy link";
+          copy.innerHTML =
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+          copy.addEventListener("click", () => copyToClipboard(item.short_url, copy));
+
+          li.append(link, dest, copy);
+          historyList.appendChild(li);
+        });
+      }
+
+      function showResult(data) {
+        shortLink.href = data.short_url;
+        shortLink.textContent = data.short_url;
+        destinationDisplay.innerHTML =
+          "Redirects to <strong>" + escapeHtml(data.destination_url) + "</strong>";
+        result.classList.remove("visible");
+        void result.offsetWidth;
+        result.classList.add("visible");
+        saveHistory(data);
+        fireConfetti();
+      }
+
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      async function copyToClipboard(url, btn) {
+        if (!url) return;
+        try {
+          await navigator.clipboard.writeText(url);
+          if (btn === copyBtn) {
+            copyBtn.classList.add("copied");
+            const label = copyBtn.lastChild;
+            const original = label.textContent;
+            label.textContent = " Copied!";
+            setTimeout(() => {
+              copyBtn.classList.remove("copied");
+              label.textContent = original;
+            }, 1800);
+          } else {
+            btn.style.color = "var(--success)";
+            setTimeout(() => {
+              btn.style.color = "";
+            }, 1200);
+          }
+        } catch {
+          showFeedback("Could not copy to clipboard.", "error");
+        }
+      }
+
+      copyBtn.addEventListener("click", () => copyToClipboard(shortLink.href, copyBtn));
+
+      clearHistoryBtn.addEventListener("click", () => {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistory();
+        updateStats();
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        hideFeedback();
+        setLoading(true);
+
+        try {
+          const response = await fetch("/v1/urls", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ destination_url: input.value.trim() }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            showFeedback(data.message || "Something went wrong.", "error");
+            return;
+          }
+
+          showResult(data);
+          showFeedback("Your short link is ready to share.", "success");
+        } catch {
+          showFeedback("Could not reach the server. Is it running?", "error");
+        } finally {
+          setLoading(false);
+        }
+      });
+
+      /* Lightweight confetti burst */
+      function fireConfetti() {
+        const ctx = confettiCanvas.getContext("2d");
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+
+        const colors = ["#5eead4", "#818cf8", "#f472b6", "#4ade80", "#fbbf24"];
+        const particles = Array.from({ length: 80 }, () => ({
+          x: confettiCanvas.width / 2,
+          y: confettiCanvas.height * 0.35,
+          vx: (Math.random() - 0.5) * 14,
+          vy: Math.random() * -12 - 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          size: Math.random() * 6 + 3,
+          rotation: Math.random() * 360,
+          spin: (Math.random() - 0.5) * 12,
+          life: 1,
+        }));
+
+        let frame = 0;
+        function tick() {
+          ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          let alive = false;
+
+          for (const p of particles) {
+            if (p.life <= 0) continue;
+            alive = true;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.35;
+            p.rotation += p.spin;
+            p.life -= 0.018;
+
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate((p.rotation * Math.PI) / 180);
+            ctx.globalAlpha = Math.max(p.life, 0);
+            ctx.fillStyle = p.color;
+            ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+            ctx.restore();
+          }
+
+          frame++;
+          if (alive && frame < 120) {
+            requestAnimationFrame(tick);
+          } else {
+            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+          }
+        }
+
+        tick();
+      }
+
+      window.addEventListener("resize", () => {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+      });
+
+      logoHome.addEventListener("click", () => {
+        location.reload();
+      });
+
+      renderHistory();
+      updateStats();
+    </script>
+  </body>
+</html>

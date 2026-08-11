@@ -1,0 +1,248 @@
+openapi: 3.0.3
+info:
+  title: URL Shortener API
+  description: >
+    A URL shortener service that creates shortened URLs, tracks clicks, and
+    redirects clients to the original destination via a 302 redirect.
+  version: 2.0.0
+
+servers:
+  - url: http://localhost:3000/v1
+    description: Development server
+
+tags:
+  - name: URLs
+    description: Operations for creating and resolving shortened URLs
+
+paths:
+  /urls:
+    post:
+      tags: [URLs]
+      summary: Create a shortened URL
+      operationId: createShortUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUrlRequest'
+      responses:
+        '201':
+          description: Shortened URL created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateUrlResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflict — slug already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Unprocessable entity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [URLs]
+      summary: List shortened URLs
+      operationId: listShortUrls
+      responses:
+        '200':
+          description: List of shortened URLs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlListResponse'
+
+  /urls/export:
+    get:
+      tags: [URLs]
+      summary: Export shortened URLs
+      operationId: exportShortUrls
+      parameters:
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+      responses:
+        '200':
+          description: Exported links
+
+  /urls/{slug}/stats:
+    get:
+      tags: [URLs]
+      summary: Get click stats for a slug
+      operationId: getUrlStats
+      parameters:
+        - $ref: '#/components/parameters/SlugParam'
+      responses:
+        '200':
+          description: Stats for the slug
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UrlStatsResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /urls/{slug}:
+    delete:
+      tags: [URLs]
+      summary: Delete a shortened URL
+      operationId: deleteShortUrl
+      parameters:
+        - $ref: '#/components/parameters/SlugParam'
+      responses:
+        '204':
+          description: Deleted
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{slug}:
+    get:
+      servers:
+        - url: http://localhost:3000
+      tags: [URLs]
+      summary: Redirect to destination URL
+      operationId: redirectToDestination
+      parameters:
+        - $ref: '#/components/parameters/SlugParam'
+      responses:
+        '302':
+          description: Redirect to destination
+        '404':
+          description: Slug not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Gone
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  parameters:
+    SlugParam:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    CreateUrlRequest:
+      type: object
+      required: [destination_url]
+      properties:
+        destination_url:
+          type: string
+          format: uri
+        custom_slug:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        max_clicks:
+          type: integer
+          minimum: 1
+        preview_enabled:
+          type: boolean
+
+    CreateUrlResponse:
+      type: object
+      required:
+        - id
+        - slug
+        - short_url
+        - destination_url
+        - created_at
+        - click_count
+      properties:
+        id:
+          type: string
+        slug:
+          type: string
+        short_url:
+          type: string
+          format: uri
+        destination_url:
+          type: string
+          format: uri
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: ['string', 'null']
+          format: date-time
+        max_clicks:
+          type: ['integer', 'null']
+        click_count:
+          type: integer
+        preview_enabled:
+          type: boolean
+
+    UrlListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreateUrlResponse'
+
+    UrlStatsResponse:
+      type: object
+      required: [slug, click_count, created_at]
+      properties:
+        slug:
+          type: string
+        click_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: ['string', 'null']
+          format: date-time
+        max_clicks:
+          type: ['integer', 'null']
+        deleted_at:
+          type: ['string', 'null']
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
