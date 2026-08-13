@@ -3,21 +3,30 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: urlshortener
-      POSTGRES_PASSWORD: urlshortener
+      POSTGRES_PASSWORD: ypiCKsaXAebfn9d6
       POSTGRES_DB: urlshortener
     ports:
       - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urlshortener -d urlshortener"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   redis:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   app:
-    # Set DOCKERHUB_USERNAME in a .env file (same as the GitHub secret).
-    # Optional: APP_TAG=sha-<commit> or a release tag (default: latest).
     image: azmiratania/url-shortener-ui:latest
     pull_policy: always
     ports:
@@ -26,11 +35,13 @@ services:
       PORT: 3000
       SHORT_URL_BASE: https://url.azmiratania.com
       REPOSITORY_TYPE: postgres
-      DATABASE_URL: postgres://urlshortener:urlshortener@postgres:5432/urlshortener
+      DATABASE_URL: postgres://urlshortener:ypICKsaXAebfn9d6@postgres:5432/urlshortener
       REDIS_URL: redis://redis:6379
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
