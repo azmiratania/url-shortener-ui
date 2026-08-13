@@ -16,12 +16,15 @@ services:
       - '6379:6379'
 
   app:
-    build: .
+    # Set DOCKERHUB_USERNAME in a .env file (same as the GitHub secret).
+    # Optional: APP_TAG=sha-<commit> or a release tag (default: latest).
+    image: azmiratania/url-shortener-ui:latest
+    pull_policy: always
     ports:
       - '3000:3000'
     environment:
       PORT: 3000
-      SHORT_URL_BASE: http://localhost:3000
+      SHORT_URL_BASE: https://url.azmiratania.com
       REPOSITORY_TYPE: postgres
       DATABASE_URL: postgres://urlshortener:urlshortener@postgres:5432/urlshortener
       REDIS_URL: redis://redis:6379
