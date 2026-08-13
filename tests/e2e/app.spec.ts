@@ -12,6 +12,18 @@ test('home page loads and shortens a URL', async ({ page }) => {
   await expect(page.locator('#qr-image')).toBeVisible();
 });
 
+test('pasting a URL into the destination field does not duplicate it', async ({ page, context }) => {
+  const destination = 'https://www.youtube.com/watch?v=Y557UYdulIU';
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await page.locator('#destination').click();
+  await page.evaluate(async (text) => {
+    await navigator.clipboard.writeText(text);
+  }, destination);
+  await page.keyboard.press('ControlOrMeta+v');
+  await expect(page.locator('#destination')).toHaveValue(destination);
+});
+
 test('logo reloads the page', async ({ page }) => {
   await page.goto('/');
   await page.fill('#destination', 'https://example.com/reload-test');

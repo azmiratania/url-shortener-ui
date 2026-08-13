@@ -247,12 +247,16 @@ export function initApp(root: HTMLElement): void {
   });
 
   document.addEventListener('paste', (event) => {
-    const text = event.clipboardData?.getData('text') ?? '';
-    if (text.startsWith('http://') || text.startsWith('https://')) {
-      input.value = text.trim();
-      input.focus();
-      showFeedback('URL pasted — press Shorten or ⌘/Ctrl+Enter.', 'success');
+    const text = (event.clipboardData?.getData('text') ?? '').trim();
+    if (!text.startsWith('http://') && !text.startsWith('https://')) {
+      return;
     }
+
+    // Stop the default insert; otherwise the URL is written twice.
+    event.preventDefault();
+    input.value = text;
+    input.focus();
+    showFeedback('URL pasted — press Shorten or ⌘/Ctrl+Enter.', 'success');
   });
 
   document.addEventListener('keydown', (event) => {
